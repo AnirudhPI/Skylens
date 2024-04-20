@@ -9,7 +9,7 @@ let dominatedPoints = [];
 let datasetColumns;
 let datasetNumericColumns;
 
-
+export let table_columns = ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB"];
 function getNumericColumns() {
     return datasetColumns.filter((column) => isNumeric(column));
 }
@@ -18,7 +18,7 @@ function isNumeric(column) {
     return !isNaN(+column);
 }
 
-export default async function parseData({filteredColumns = ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB"],limit=100}) {
+export async function parseData({filteredColumns = ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB"],limit=100}) {
 
     return await d3.csv(`/nba_stats.csv`)
         .then((data) => {

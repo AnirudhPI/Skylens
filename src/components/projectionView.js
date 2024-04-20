@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { UMAP } from 'umap-js';
-import parseData from '../app/dataParser/dataParser';
+import {parseData} from '../app/dataParser/dataParser';
 
 function ProjectionView() {
   let filteredColumns = ["Age"];
