@@ -1,44 +1,17 @@
 import * as d3 from 'd3';
 import { UMAP } from 'umap-js';
+import parseData from '../app/dataParser/dataParser';
 
 function ProjectionView() {
   let filteredColumns = ["Age"];
 
-  d3.csv(`/nba_stats.csv`, function(d){
-    return {
-        Player: d.Player,
-        Pos: d.Pos,
-        G: +d.G,   
-        GS: +d.GS,
-        MP: +d.MP, 
-        FG: +d.FG,
-        "3P": +d["3P"], 
-        DRB: +d.DRB, 
-        TRB: +d.TRB
-    };
-  }).then((data) => {
+  parseData({limit:30}).then(({data,skyline,dominatedPoints,datasetNumericColumns}) => {
+
 
   
-          const selectedDataset = data;
-          const datasetColumns = data.columns;
-          const datasetNumericColumns = datasetColumns
-              .filter((column) => filteredColumns.indexOf(column) < 0)
-              .filter((column) => {
-                  for (var i = 0; i < data.length; i++) {
-                      let value = data[i][column];
-                      if (!value) continue;
-                      if (!isNaN(value)) return true;
-                      else return false;
-                  }
-            });
-
           //MY CODE WHICH STAYS IN THIS, ABOVE PART SHOULD COME UPON DATASET SELECT
           //THE selectedDataset SHOULD BE REPLACED WITH SKYLINE POINTS ONLY WITHOUT SPLICE.
-          const filtered_skyline = selectedDataset.splice(0,30);
-          filtered_skyline.forEach((element,index) => {
-              element['dom_score'] = 25 + index * 5;  
-          });
-        
+          const filtered_skyline = data;
           const NumericalData = filtered_skyline.map(obj =>
               datasetNumericColumns.map(key => obj[key])
             );
@@ -48,8 +21,9 @@ function ProjectionView() {
                   datasetNumericColumns.map(key => [key, obj[key]])
               )
           );
-        
-          const umap = new UMAP({nNeighbors: 20});
+
+          const umap = new UMAP({nNeighbors: 15, nEpochs:100});
+
           const reducedData = umap.fit(NumericalData);
           
           const svg = d3.select("#projectionSVG");
