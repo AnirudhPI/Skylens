@@ -36,7 +36,7 @@ const datasetDescriptions={
 }
 function DatasetAttributes() {
   return table_columns.map((column) => (
-    <div className="datasetAttribute">
+    <div className="datasetAttribute" key={column}>
       <div><b>{column}</b>: {datasetDescriptions[column]}</div>
     </div>
   )); 
@@ -44,7 +44,10 @@ function DatasetAttributes() {
 export default function SelectDataset() {
   return (
     <div className="selectDataset">
-      <h3>Dataset Attributes</h3>
+      <div>
+        <h3>Dataset Attributes</h3>  
+      </div>
+      
       <DatasetAttributes />
     </div>
   );

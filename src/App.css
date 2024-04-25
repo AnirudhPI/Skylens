@@ -45,6 +45,7 @@ main > .lower {
 
 .projectionView,
 .comparisonView,
+.graphView,
 .selectDataset {
   flex:3;
   height: 100%;
@@ -53,7 +54,11 @@ main > .lower {
   padding: 8px;
 }
 .selectDataset{
-  flex:1
+  flex:1;
+  display: flex;
+  flex-direction: column;
+  
+  overflow-y: scroll;
 }
 .tabularView {
   width: 100%;
@@ -65,7 +70,8 @@ main > .lower {
 
 #tabularSVG,
 #projectionSVG,
-#comparisonSVG {
+#comparisonSVG,
+#graphSVG {
   border: 1px solid black;
   width: 100%;
   height: 94%;
