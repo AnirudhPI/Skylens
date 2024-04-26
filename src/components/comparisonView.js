@@ -2,9 +2,11 @@ import * as d3 from 'd3';
 import { useEffect, useRef } from "react";
 import {parseData} from '../app/dataParser/dataParser';
 
-function ComparisonView() {
+function ComparisonView(props) {
 
-  function drawRadarChart(positionX, positionY, radius, color, playerData) {
+  function drawRadarChart(positionX, positionY, radius, color, playerData, offset) {
+
+    console.log('playerData', playerData)
 
     const nameOfPlayer = playerData.Player;
     console.log('playerName: ', nameOfPlayer);
@@ -27,7 +29,7 @@ function ComparisonView() {
         };
     }
     
-    var labels = ['GP', 'MIN', 'PTS', 'FGM', 'AST', 'STL', 'BLK'];
+    var labels = ["G","ORB", "DRB", "TRB", "AST", "STL","PTS"];
 
     var numLines = 7;
     var startingAngle = -Math.PI / 2; 
@@ -65,7 +67,7 @@ function ComparisonView() {
             .text(label);
     });
 
-    var domicating_score = 2 * 5;
+    var domicating_score = playerData.dom_score;
     
     svg.append('circle')
         .attr('cx', centerX)
@@ -77,25 +79,23 @@ function ComparisonView() {
         .attr('stroke-dasharray', '5,5');
 
     var scores = {
-        GP: playerData.G/2,   // G
-        MIN: playerData.MP,  // MP
-        PTS: 14 * 1.2,  // 
-        FGM: playerData.FG,   // FG
-        AST: 11 * 1.2,  // 
-        STL: 40 * 1.2,
-        BLK: 39 * 1.2
+        G: playerData.G - 23 + offset,      // scale 70 - 83
+        ORB: playerData.ORB * 18 + offset,  // 0.4 - 3.3
+        DRB: playerData.DRB * 9 + offset,   // 2.2 - 9.1
+        TRB: playerData.TRB * 4 + offset,   // 2.5 - 12.3
+        AST: playerData.AST * 5 + offset,   // scale 1-10
+        STL: playerData.STL * 30 + offset,  // 0.6 - 1.6
+        PTS: playerData.PTS * 1.66 + offset // 7 - 30.1
     };
-
-    // console.log('scores: ', scores);
     
     var labelAngles = {
-      GP: 0,
-      MIN: (1 * 2 * Math.PI) / 7,
-      PTS: (2 * 2 * Math.PI) / 7,
-      FGM: (3 * 2 * Math.PI) / 7,
+      G: 0,
+      ORB: (1 * 2 * Math.PI) / 7,
+      DRB: (2 * 2 * Math.PI) / 7,
+      TRB: (3 * 2 * Math.PI) / 7,
       AST: (4 * 2 * Math.PI) / 7,
       STL: (5 * 2 * Math.PI) / 7,
-      BLK: (6 * 2 * Math.PI) / 7
+      PTS: (6 * 2 * Math.PI) / 7
     };
     
     Object.entries(scores).forEach(([stat, value]) => {
@@ -154,6 +154,34 @@ function ComparisonView() {
         .attr('fill', function(d, i) {
             return colors[i];
         });
+
+
+    var outerArcRadius = chartRadius / 3 + 1 ; // Adjust as needed to draw arcs outside the pie chart
+    var arcPadding = 0.02; // Padding between arcs, adjust as needed
+
+    var arcGenerator = d3.arc()
+        .innerRadius(outerArcRadius)
+        .outerRadius(outerArcRadius + 5) // Adjust width of the arc
+        .padAngle(arcPadding);
+
+    var pieData = pie(scores);
+
+    // Create groups for each arc
+    var arcGroups = d3.select("#comparisonSVG").append('g')
+        .attr('transform', `translate(${centerX}, ${centerY})`)
+        .selectAll('.arc-group')
+        .data(pieData)
+        .enter()
+        .append('g')
+        .attr('class', 'arc-group');
+
+    // Draw the arcs
+    arcGroups.append('path')
+        .attr('d', arcGenerator)
+        .attr('fill', function(d, i) {
+            return colors[i]; // Use corresponding color or a function to determine it
+        })
+        .attr('stroke', 'none'); // Remove stroke if not needed
   }
 
   function updateVisualization(selectedPlayers) {
@@ -170,17 +198,11 @@ function ComparisonView() {
 
     var colors = ['#8d53d4']
 
-    parseData({filteredColumns : ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB", "PTS"], limit:100}).then(parseData => {
-        selectedPlayers.forEach((playerName, index) => {
-            let playerData = parseData.data.find(player => player.Player === playerName);
+    selectedPlayers.forEach((playerData, index) => {
+        let positionY = (index * centerY * 2) + centerY;
+        let positionX = (index * centerX * 2) + centerX;
 
-            let positionY = (index * centerY * 2) + centerY;
-            let positionX = (index * centerX * 2) + centerX;
-
-            drawRadarChart(positionX + 50, positionY , chartRadius, colors[index], playerData);
-        });
-    }).catch(error => {
-        console.error('Error loading the CSV file: ', error);
+        drawRadarChart(positionX + 50, positionY , chartRadius, colors[index], playerData, 30);
     });
 
   }
@@ -198,16 +220,14 @@ function ComparisonView() {
 
     var colors = ['#8d53d4', '#db9430']
 
-    parseData({filteredColumns : ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB", "PTS"], limit:100}).then(parseData => {
-        selectedPlayers.forEach((playerName, index) => {
-            let playerData = parseData.data.find(player => player.Player === playerName);
+    var dominating_scores = []
 
-            let positionY = (index * centerY * 2) + centerY;
+    selectedPlayers.forEach((playerData, index) => {
 
-            drawRadarChart(centerX + 50, positionY + 15, chartRadius - 50, colors[index], playerData);
-        });
-    }).catch(error => {
-        console.error('Error loading the CSV file: ', error);
+        let positionY = (index * centerY * 2) + centerY;
+
+        drawRadarChart(centerX + 50, positionY + 15, chartRadius - 50, colors[index], playerData, 0);
+        dominating_scores.push(playerData.dom_score)
     });
 
     drawPieChart(centerX + 50, centerY+ 80, [dominating_scores[0], dominating_scores[1]], chartRadius - 50, colors);
@@ -235,22 +255,18 @@ function ComparisonView() {
 
     var colors = ['#8d53d4', '#db9430', '#309adb'];
 
-    parseData({filteredColumns : ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB", "PTS"], limit:100}).then(parseData => {
-        console.log('parse: ', parseData)
-        selectedPlayers.forEach((playerName, index) => {
+    var dominating_scores = []
+    
+    selectedPlayers.forEach((playerData, index) => {
+        if (!playerData) {
+            console.error('Player not found in data:', playerData.Player);
+            return;
+        }
+        let position = chartPositions[index];
 
-            let playerData = parseData.data.find(player => player.Player === playerName);
-            if (!playerData) {
-                console.error('Player not found in data:', playerName);
-                return;
-            }
-            let position = chartPositions[index];
-
-            drawRadarChart(position.x+80, position.y+40, chartRadius, colors[index], playerData);
-            
-        });
-    }).catch(error => {
-        console.error('Error loading the CSV file: ', error);
+        drawRadarChart(position.x+80, position.y+40, chartRadius, colors[index], playerData, 0);
+        dominating_scores.push(playerData.dom_score)
+        
     });
 
     // three lines
@@ -333,6 +349,8 @@ function ComparisonView() {
         .attr('y2', bottomLeftChartPosition.y + 40)
         .attr('stroke', 'gray') 
         .attr('stroke-width', 1);
+
+    console.log('dom scores', dominating_scores)
         
 
     drawPieChart(centerX + 80, centerY+100, dominating_scores, chartRadius, colors); // center pie
@@ -342,37 +360,62 @@ function ComparisonView() {
   }
 
 
-  function updateVisualizationBasedOnPlayers(selectedPlayers) {
-    switch(selectedPlayers.length) {
-        case 1:
-            updateVisualization(selectedPlayers);
-            break;
-        case 2:
-            updateVisualization2(selectedPlayers);
-            break;
-        case 3:
-            updateVisualization3(selectedPlayers);
-            break;
-        default:
-            d3.select('#comparisonSVG').selectAll('*').remove();
-            console.log("The number of players selected does not match any visualization format.");
-            break;
-    }
+  function updateVisualizationBasedOnPlayers() {
+    var selectedPlayersId = props.selectedpoints;
+    var selectedPlayers = [];
+    
+    parseData().then(({data,skyline,dominatedPoints,datasetNumericColumns}) => {
+        selectedPlayersId.forEach(id => {
+            selectedPlayers.push(skyline.find(x => x.id === id))  
+        });
+
+        switch(selectedPlayers.length) {
+            case 1:
+                updateVisualization(selectedPlayers);
+                break;
+            case 2:
+                updateVisualization2(selectedPlayers);
+                break;
+            case 3:
+                updateVisualization3(selectedPlayers);
+                break;
+            default:
+                d3.select('#comparisonSVG').selectAll('*').remove();
+                console.log("The number of players selected does not match any visualization format.");
+                break;
+        }
+        const minMax = findMinMax(skyline, 'PTS')
+        console.log(`Minimum field: ${minMax.min}, Maximum field: ${minMax.max}`);
+    });
+
   }
 
+
+  function findMinMax(skyline, field) {
+    return skyline.reduce((acc, obj) => {
+      // Set initial min and max with the first object's height
+      if (acc.min === undefined || obj[field] < acc.min) {
+        acc.min = obj[field];
+      }
+      if (acc.max === undefined || obj[field] > acc.max) {
+        acc.max = obj[field];
+      }
+      return acc;
+    }, {min: undefined, max: undefined});
+  }
 
   // Static part, needs to be linked to Projection view
 
   /* var selectedPlayers = [];
   // var selectedPlayers = ['Julius Randle']; 
   // var selectedPlayers = ['Julius Randle', 'Anthony Edwards']; */
-  var selectedPlayers = ['Julius Randle', 'Anthony Edwards', 'Buddy Hield']; 
-  var dominating_scores = [2, 11, 15]
+  // var selectedPlayers = ['Julius Randle', 'Anthony Edwards', 'Buddy Hield']; 
+  // var dominating_scores = [2, 11, 15]
   
 
   let ref = useRef(null);
   useEffect(() => {
-    updateVisualizationBasedOnPlayers(selectedPlayers)
+    updateVisualizationBasedOnPlayers(props.selectedPlayers)
   }, []);
 
   return (
