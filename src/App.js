@@ -7,7 +7,7 @@ import "./App.css";
 import GraphView from "./components/GraphView";
 
 function App() {
-  let [selectedpoints,setSelelectedPoints] = useState(Array.from({length: 4}, () => Math.floor(Math.random() * 122)));
+  let [selectedpoints,setSelelectedPoints] = useState(Array.from({length: 3}, () => Math.floor(Math.random() * 122)));
   let [selectNewChart, setSelectNewChart] = useState(false);
   
   return (
