@@ -14,7 +14,7 @@ export async function parseData() {
             // filter columns based on games played.
             datasetColumns = data.columns.filter((column)=> table_columns.includes(column));
             data = data.filter((row) => Number(row['G']) >= 70);
-            console.log('filter',data);
+            // console.log('filter',data);
            
                 datasetNumericColumns = datasetColumns.filter((column) => 
                     {
@@ -83,7 +83,7 @@ function calculateSkylinePoints(data) {
     const uniqueDominatedPoints = Array.from(new Set(dominatedPoints.map(JSON.stringify)), JSON.parse);
     
     
-    console.log({ data: data, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns })
+    // console.log({ data: data, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns })
     return { data: data, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns };
 }
 
@@ -95,3 +95,15 @@ function dominates(point1, point2) {
     );
 }
 
+export const calculateExclusiveDominantionScores = (dominatedPoints,point1, point2) => {
+    
+    let domby1 = new Set(dominatedPoints.filter((dom_point)=>{
+        return dom_point.dominated_by.includes(point1);
+    }));
+    console.log("domby1",domby1)
+    let domby2 = new Set(dominatedPoints.filter((dom_point)=>{
+        return dom_point.dominated_by.includes(point2);
+    }));
+    return [domby1.difference(domby2).size, domby2.difference(domby1).size]; 
+    
+}

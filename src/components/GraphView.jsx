@@ -1,90 +1,149 @@
 import * as d3 from 'd3';
 import { useEffect, useRef } from "react";
-import { parseData } from "../app/dataParser/dataParser";
-const width = 620;
+import { parseData,calculateExclusiveDominantionScores } from "../app/dataParser/dataParser";
+const width = 800;
 const height = 320;
-function drawGraph(data,svg) {
-     // Initialize the links
-     console.log(data);
-  var link = svg
-    .selectAll("line")
-    .data(data.links)
-    .enter()
-    .append("line")
-      .style("stroke", "#aaa")
+function drawGraph(data, svg) {
+  // Initialize the links
+  var link = svg.selectAll(".link")
+      .data(data.links)
+      .enter()
+      .append("g")
+      .attr("class", "link");
 
   // Initialize the nodes
   const color = d3.scaleOrdinal(d3.schemeAccent);
-  var node = svg
-    .selectAll("circle")
-    .data(data.nodes)
-    .enter()
-    .append("circle")
-      .attr("r", (d)=> 5 + Math.sqrt(d.dom_score))
-      .style("fill",(d)=>color(d.name))
+  var node = svg.selectAll("circle")
+      .data(data.nodes)
+      .enter()
+      .append("circle")
+      .attr("r", d => 10 + Math.sqrt(d.dom_score))
+      // .style("fill", "none")
+      .style("fill", d => color(d.id));
 
   // Let's list the force we wanna apply on the network
-  var simulation = d3.forceSimulation(data.nodes)                 // Force algorithm is applied to data.nodes
-      .force("link", d3.forceLink()                               // This force provides links between nodes
-            .id(function(d) { return d.id; })                     // This provide  the id of a node
-            .links(data.links)                                    // and this the list of links
+  var simulation = d3.forceSimulation(data.nodes)
+      .force("link", d3.forceLink()
+          .id(d => d.id)
+          .links(data.links)
       )
-      .force("charge", d3.forceManyBody().strength(-10000))         // This adds repulsion between nodes. Play with the -400 for the repulsion strength
-      .force("center", d3.forceCenter(width / 2, height / 2))     // This force attracts nodes to the center of the svg area
-      .on("end", ticked);
+      .force("charge", d3.forceManyBody().strength(-10000))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .on("tick", ticked)
+      .on("end", ended);
+  // This function is run at each iteration of the force algorithm, updating the nodes and links position.
+  function ended() {
+      // Update link positions
+      link.each(function(d) {
+        const barsData = axis2d(d);
+        console.log('inbards',d,barsData)
+        d3.select(this)
+            .selectAll(".bar")
+            .data(barsData)
+            .enter()
+            .append("line")
+            .attr("class", "bar")
+            .attr("stroke-width", 5)
+            
+            .attr("stroke",d => color(d.id))
+            .attr("x1", d => d.x1)
+            .attr("y1", d => d.y1)
+            .attr("x2", d => d.x2)
+            .attr("y2", d => d.y2)
+            .attr("stroke-linecap", "round")
+      });
 
-  // This function is run at each iteration of the force algorithm, updating the nodes position.
-  function ticked() {
-    link
-        .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+     
+  }
+  function ticked(){
+     // Update node positions
+     node.attr("cx", d => d.x)
+     .attr("cy", d => d.y);
+  }
+}
 
-    node
-         .attr("cx", function (d) { return d.x; })
-         .attr("cy", function(d) { return d.y; });
-  }}
-  const buildGraphdata = (data,skyline,dominatedPoints,datasetNumericColumns) => {
+
+  const buildGraphdata = (skyline,dominatedPoints,datasetNumericColumns) => {
     var nodes = [];
     var links = [];
-    for(var i = 0; i < data.length; i++) {
+    for(var i = 0; i < skyline.length; i++) {
         nodes.push({
-            id:i,name:data[i].Player,
-            dom_score:data[i].dom_score
+            id:i,
+            name:skyline[i].Player,
+            dom_score:skyline[i].dom_score
         });
-        for(var j = 0; j < data.length; j++) {
+        for(let j = i; j < skyline.length; j++) {
             if (i !==j)
-                links.push({source:i,target:j});
+                links.push({
+                  source:i,
+                  target:j,
+                  dom_score:calculateExclusiveDominantionScores(dominatedPoints, skyline[i].id,skyline[j].id)
+                });
         }
     }
+    console.log(dominatedPoints)
+    console.log("links",links)
     return {nodes:nodes,links:links};
 }
 function GraphView(props) {
 
-    console.log(props.selectedpoints);
+
     let ref = useRef(null);
     useEffect(() => {
-        let filteredData = [];
+        let filteredSkyline = [];
         const svg = d3.select(ref.current)
-        parseData({limit:30}).then(({data,skyline,dominatedPoints,datasetNumericColumns}) => {
+        parseData({limit:30}).then(({_,skyline,dominatedPoints,datasetNumericColumns}) => {
  
             for(var i of props.selectedpoints) {
-                filteredData.push(data[i]);
+                filteredSkyline.push(skyline[i]);
             }
-        
-        drawGraph(buildGraphdata(filteredData,skyline,dominatedPoints,datasetNumericColumns),svg);
+
+        drawGraph(buildGraphdata(filteredSkyline,dominatedPoints,datasetNumericColumns),svg);
     });
-    }, []);
+    }, [props.selectedpoints]);
 
   return (
-    <div className="graphView">
+    <div className="graphView" key = {props.selectedpoints}>
       <h3>Graph View</h3>
       <svg id="graphSVG" ref = {ref}></svg>
     </div>
   );
 }
-function StackedBarGlyph() {
+function axis2d(links) {
+  const margin = 0.15; // Adjust the margin as needed
+
+  const x1 = links.target.x;
+  const y1 = links.target.y;
+  const x2 = links.source.x;
+  const y2 = links.source.y;
+  const dom_score = links.dom_score;
   
+  const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  const theta = Math.atan2(y2 - y1, x2 - x1);
+  const domscore_sum = d3.sum(dom_score);
+  const lerps = dom_score.map(d => d / domscore_sum);
+  // const lerps = [0.5,0.5];
+  const scaledX1 = x1 + margin * length * Math.cos(theta);
+  const scaledY1 = y1 + margin * length * Math.sin(theta);
+  const scaledX2 = x2 - margin * length * Math.cos(theta);
+  const scaledY2 = y2 - margin * length * Math.sin(theta);
+
+  const ret = [{
+    x1: scaledX1,
+    y1: scaledY1,
+    x2: scaledX1 + lerps[0] * (1-2*margin) * length * Math.cos(theta),
+    y2: scaledY1 + lerps[0] * (1-2*margin) * length * Math.sin(theta),
+    id: links.target.id,
+    
+  }, {
+    x1: scaledX1 + lerps[0]* (1-2*margin) * length * Math.cos(theta),
+    y1: scaledY1 + lerps[0] * (1-2*margin) * length * Math.sin(theta),
+    x2: scaledX2,
+    y2: scaledY2,
+    id: links.source.id,
+  }];
+
+  return ret;
 }
+
 export default GraphView;
