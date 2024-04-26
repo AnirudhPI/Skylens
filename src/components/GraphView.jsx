@@ -1,6 +1,6 @@
+import * as d3 from 'd3';
 import { useEffect, useRef } from "react";
 import { parseData } from "../app/dataParser/dataParser";
-import * as d3 from 'd3';
 const width = 620;
 const height = 320;
 function drawGraph(data,svg) {
@@ -20,7 +20,7 @@ function drawGraph(data,svg) {
     .data(data.nodes)
     .enter()
     .append("circle")
-      .attr("r", (d)=> 5+ Math.sqrt(d.dom_score))
+      .attr("r", (d)=> 5 + Math.sqrt(d.dom_score))
       .style("fill",(d)=>color(d.name))
 
   // Let's list the force we wanna apply on the network
@@ -54,30 +54,30 @@ function drawGraph(data,svg) {
             dom_score:data[i].dom_score
         });
         for(var j = 0; j < data.length; j++) {
-            if (i !=j) 
+            if (i !==j)
                 links.push({source:i,target:j});
         }
     }
     return {nodes:nodes,links:links};
 }
 function GraphView({props}) {
-   
-    
+
+
     let ref = useRef(null);
     useEffect(() => {
         let filteredData = [];
-        
+
         const svg = d3.select(ref.current)
         parseData({limit:30}).then(({data,skyline,dominatedPoints,datasetNumericColumns}) => {
             let selectedpoints = Array.from({length: 4}, () => Math.floor(Math.random() * data.length));;
             for(var i of selectedpoints) {
                 filteredData.push(data[i]);
             }
-            
+        
         drawGraph(buildGraphdata(filteredData,skyline,dominatedPoints,datasetNumericColumns),svg);
     });
     }, []);
-    
+
   return (
     <div className="graphView">
       <h3>Graph View</h3>
@@ -85,5 +85,7 @@ function GraphView({props}) {
     </div>
   );
 }
-
+function StackedBarGlyph() {
+  
+}
 export default GraphView;

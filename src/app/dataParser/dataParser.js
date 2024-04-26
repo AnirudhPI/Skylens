@@ -11,15 +11,17 @@ let datasetNumericColumns;
 
 export let table_columns = ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB"];
 
-export async function parseData({filteredColumns = ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB"],limit=100}) {
+export async function parseData() {
 
     return await d3.csv(`/nba_stats.csv`)
         .then((data) => {
-            selectedDataset = data.slice(0,limit);
-            datasetColumns = data.columns.filter((column) => filteredColumns.indexOf(column) > -1);
 
-            datasetNumericColumns = datasetColumns
-                .filter((column) => {
+            // filter columns based on games played.
+            datasetColumns = data.columns
+            data = data.filter((row) => Number(row['G']) >= 70);
+            console.log('filter',data);
+           
+                datasetNumericColumns = datasetColumns.filter((column) => {
                     for (var i = 0; i < data.length; i++) {
                         let value = data[i][column];
                         if (!value) continue;
@@ -35,6 +37,7 @@ export async function parseData({filteredColumns = ["Player","Pos","G","GS","MP"
                     data[i][datasetNumericColumns[j]] = Number(data[i][datasetNumericColumns[j]]);
                 }
             }
+            selectedDataset = data;
             let result =  calculateSkylinePoints();
             result.data = result.data.sort((a,b) => a.dom_score - b.dom_score);
             return result;
