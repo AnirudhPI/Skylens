@@ -53,6 +53,7 @@ function calculateSkylinePoints(data) {
     for (let i = 0; i < data.length; i++) {
         const dataPoint1 = data[i];
         dataPoint1.dom_score = 0;
+        dataPoint1.dominated_players = [];
         let isDominated = false;
         for (let j = 0; j < data.length; j++) {
             
@@ -67,6 +68,7 @@ function calculateSkylinePoints(data) {
                     if (!dataPoint2.dominated_by) dataPoint2.dominated_by = [];
                     dataPoint2.dominated_by.push(dataPoint1.id);
                     dataPoint1.dom_score = dataPoint1.dom_score + 1;
+                    dataPoint1.dominated_players.push(dataPoint2.id);
                     dominatedPoints.push(dataPoint2);
                 }
             }
