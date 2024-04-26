@@ -6,6 +6,7 @@ function ProjectionView(props) {
   let radial_box;
   let x;
   let y;
+  var res = [...props.selectedpoints];
 
   parseData().then(({data,skyline,dominatedPoints,datasetNumericColumns}) => {
 
@@ -38,7 +39,6 @@ function ProjectionView(props) {
             .range([height - 40, 40]); 
         
           const maxDomScore = d3.max(filtered_skyline, d => d.dom_score);
-
           svg.selectAll("circle")
           .data(reducedData)
           .enter()
@@ -115,6 +115,23 @@ function ProjectionView(props) {
 
             d3.select('.tooltip').remove();
 
+          })
+          .on("click", (event) => {
+
+            var className = event.srcElement.className.baseVal;
+            var index = Number(className.substring(3));
+        
+            if (!res.includes(index)) {
+              if(res.length < 3){
+                res.push(index);
+
+              }
+            }
+            else{
+              res = res.filter((item) => item !== index);
+            }
+
+            props.setSelectedPoints([...res]);
           }); 
         
           x = d3.scaleBand()

@@ -7,10 +7,7 @@ import "./App.css";
 import GraphView from "./components/GraphView";
 
 function App() {
-  // let [selectedpoints,setSelelectedPoints] = useState(Array.from({length: 3}, () => Math.floor(Math.random() * 122)));
-  let [selectedpoints,setSelelectedPoints] = useState([0,4,14]);
-  // let [selectedpoints,setSelelectedPoints] = useState([0,4]);
-  // let [selectedpoints,setSelelectedPoints] = useState([0]);
+  let [selectedpoints,setSelectedPoints] = useState([]);
   let [selectNewChart, setSelectNewChart] = useState(false);
   
   return (
@@ -24,9 +21,9 @@ function App() {
           <button onClick={() => setSelectNewChart(!selectNewChart)}>Use {selectNewChart ? "Comparison View":"Graph View"}</button>
         </div> 
         <div className="upper">
-          <ProjectionView selectedpoints={selectedpoints} setSelectedPoints={setSelelectedPoints} />
-          {selectNewChart && <GraphView selectedpoints={selectedpoints} setSelectedPoints={setSelelectedPoints} />}
-          {!selectNewChart && <ComparisonView selectedpoints={selectedpoints} setSelectedPoints={setSelelectedPoints} />}
+          <ProjectionView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} />
+          {selectNewChart && <GraphView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} />}
+          {!selectNewChart && <ComparisonView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} />}
           <SelectDataset />
         </div>
         <div className="lower">

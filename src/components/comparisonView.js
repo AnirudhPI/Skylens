@@ -188,7 +188,7 @@ function ComparisonView(props) {
 
     d3.select('#comparisonSVG').selectAll('*').remove();
 
-    var svgWidth = 400;
+    var svgWidth = 400; 
     var svgHeight = 300;
     d3.select('#comparisonSVG').attr('width', svgWidth).attr('height', svgHeight);
 
@@ -210,7 +210,7 @@ function ComparisonView(props) {
   function updateVisualization2(selectedPlayers) {
     d3.select('#comparisonSVG').selectAll('*').remove();
 
-    var svgWidth = 400;
+    var svgWidth = 400; 
     var svgHeight = 300;
     d3.select('#comparisonSVG').attr('width', svgWidth).attr('height', svgHeight);
 
@@ -415,8 +415,9 @@ function ComparisonView(props) {
 
   let ref = useRef(null);
   useEffect(() => {
-    updateVisualizationBasedOnPlayers(props.selectedPlayers)
-  }, []);
+    updateVisualizationBasedOnPlayers(props.selectedpoints)
+  }, [JSON.stringify(props.selectedpoints)]);
+
 
   return (
     <div className="comparisonView">
