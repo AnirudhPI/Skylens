@@ -7,7 +7,9 @@ import "./App.css";
 import GraphView from "./components/GraphView";
 
 function App() {
+  let [selectedpoints,setSelelectedPoints] = useState(Array.from({length: 4}, () => Math.floor(Math.random() * 122)));
   let [selectNewChart, setSelectNewChart] = useState(false);
+  
   return (
     <div className="App">
       <header>
@@ -19,9 +21,9 @@ function App() {
           <button onClick={() => setSelectNewChart(!selectNewChart)}>Use {selectNewChart ? "Comparison View":"Graph View"}</button>
         </div> 
         <div className="upper">
-          <ProjectionView />
-          {selectNewChart && <GraphView />}
-          {!selectNewChart && <ComparisonView />}
+          <ProjectionView selectedpoints={selectedpoints} setSelectedPoints={setSelelectedPoints} />
+          {selectNewChart && <GraphView selectedpoints={selectedpoints} setSelectedPoints={setSelelectedPoints} />}
+          {!selectNewChart && <ComparisonView selectedpoints={selectedpoints} setSelectedPoints={setSelelectedPoints} />}
           <SelectDataset />
         </div>
         <div className="lower">

@@ -60,17 +60,16 @@ function drawGraph(data,svg) {
     }
     return {nodes:nodes,links:links};
 }
-function GraphView({props}) {
+function GraphView(props) {
 
-
+    console.log(props.selectedpoints);
     let ref = useRef(null);
     useEffect(() => {
         let filteredData = [];
-
         const svg = d3.select(ref.current)
         parseData({limit:30}).then(({data,skyline,dominatedPoints,datasetNumericColumns}) => {
-            let selectedpoints = Array.from({length: 4}, () => Math.floor(Math.random() * data.length));;
-            for(var i of selectedpoints) {
+ 
+            for(var i of props.selectedpoints) {
                 filteredData.push(data[i]);
             }
         

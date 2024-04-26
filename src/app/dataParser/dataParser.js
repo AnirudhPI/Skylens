@@ -1,15 +1,10 @@
 import * as d3 from "d3";
 
-let selected_dataset = "";
-const filename = "";
-let selectedDataset = [];
-let skyline = [];
-let dominatedPoints = [];
+
 
 let datasetColumns;
 let datasetNumericColumns;
-
-export let table_columns = ["Player","Pos","G","GS","MP","FG","3P","DRB","TRB"];
+export let table_columns = ["Player","G","ORB", "DRB", "TRB", "AST", "STL","PTS" ];
 
 export async function parseData() {
 
@@ -17,11 +12,12 @@ export async function parseData() {
         .then((data) => {
 
             // filter columns based on games played.
-            datasetColumns = data.columns
+            datasetColumns = data.columns.filter((column)=> table_columns.includes(column));
             data = data.filter((row) => Number(row['G']) >= 70);
             console.log('filter',data);
            
-                datasetNumericColumns = datasetColumns.filter((column) => {
+                datasetNumericColumns = datasetColumns.filter((column) => 
+                    {
                     for (var i = 0; i < data.length; i++) {
                         let value = data[i][column];
                         if (!value) continue;
@@ -37,8 +33,8 @@ export async function parseData() {
                     data[i][datasetNumericColumns[j]] = Number(data[i][datasetNumericColumns[j]]);
                 }
             }
-            selectedDataset = data;
-            let result =  calculateSkylinePoints();
+
+            let result =  calculateSkylinePoints(data);
             result.data = result.data.sort((a,b) => a.dom_score - b.dom_score);
             return result;
         })
@@ -49,19 +45,19 @@ export async function parseData() {
 }
 
 
-function calculateSkylinePoints() {
+function calculateSkylinePoints(data) {
     const skyline = [];
     const dominatedPoints = [];
     
     //  loop through all data points, and for each point, check if it dominates any other points push to skyline or dominatedPoints
-    for (let i = 0; i < selectedDataset.length; i++) {
-        const dataPoint1 = selectedDataset[i];
+    for (let i = 0; i < data.length; i++) {
+        const dataPoint1 = data[i];
         dataPoint1.dom_score = 0;
         let isDominated = false;
-        for (let j = 0; j < selectedDataset.length; j++) {
+        for (let j = 0; j < data.length; j++) {
             
             if (i !== j) {
-                const dataPoint2 = selectedDataset[j];
+                const dataPoint2 = data[j];
     
                 if (dominates(dataPoint2, dataPoint1)) {
                     isDominated = true;
@@ -70,7 +66,7 @@ function calculateSkylinePoints() {
                     // If dataPoint1 dominates dataPoint2, add dataPoint2 to dominatedPoints
                     if (!dataPoint2.dominated_by) dataPoint2.dominated_by = [];
                     dataPoint2.dominated_by.push(dataPoint1.id);
-                    dataPoint1.dom_score += 1;
+                    dataPoint1.dom_score = dataPoint1.dom_score + 1;
                     dominatedPoints.push(dataPoint2);
                 }
             }
@@ -85,8 +81,8 @@ function calculateSkylinePoints() {
     const uniqueDominatedPoints = Array.from(new Set(dominatedPoints.map(JSON.stringify)), JSON.parse);
     
     
-    console.log({ data: selectedDataset, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns })
-    return { data: selectedDataset, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns };
+    console.log({ data: data, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns })
+    return { data: data, skyline, dominatedPoints: uniqueDominatedPoints, datasetNumericColumns };
 }
 
 
@@ -97,6 +93,3 @@ function dominates(point1, point2) {
     );
 }
 
-function calculateDomScore(point, dominatedPoints) {
-
-}
