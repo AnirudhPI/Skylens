@@ -1,12 +1,13 @@
 # Skylens:a Visual Analysis of Skyline on Multi-dimensional
 
-This is our Data Visualization project,implementing the [Skylens paper](https://arxiv.org/abs/1708.03462) by Zhao et al.
+This is our Data Visualization project,implementing the [Skylens paper](https://arxiv.org/abs/1708.03462) by Zhao et al. For this project we have used the NBA 2022-2023 season stats, [link](https://www.kaggle.com/datasets/vivovinco/20222023-nba-player-stats-regular).
 Built using React and D3.js.
 ## Demo
 ![demo](/public/demo.png)
 ![demo2](/public/demo2.png)
 ## Installation
- 1.Clone this Repository .
+
+ 1. Clone this Repository 
  2. Install node and npm. [Guide available here](https://nodejs.org/en/download/).
  3. Install dependencies.
     ```
