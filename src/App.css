@@ -71,10 +71,11 @@ main > .lower {
 #tabularSVG,
 #projectionSVG,
 #comparisonSVG,
-#graphSVG {
+#graphSVG,
+.graphSVG {
   border: 1px solid black;
   width: 100%;
-  height: 94%;
+  height: 93%;
 }
 
 h3 {
@@ -120,4 +121,18 @@ h3 {
 }
 .label{
   height:100px;
+}
+.chart-header{
+  display:flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+}
+.toggle-button{
+  background-color: white;
+  border: 1px solid black;
+  padding: 5px;
+  margin-bottom:5px;
+  border-radius: 5px;
 }

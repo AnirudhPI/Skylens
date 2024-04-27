@@ -251,7 +251,11 @@ function ProjectionView(props) {
 
   return (
     <div className="projectionView">
+      <div className="projection-header">
       <h3>Projection View</h3>
+      
+      </div>
+      
       <svg id="projectionSVG"></svg>
     </div>
   );

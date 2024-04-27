@@ -5,6 +5,7 @@ import TabularView from "./components/tabularView";
 import { useState } from "react";
 import "./App.css";
 import GraphView from "./components/GraphView";
+import { select } from "d3";
 
 function App() {
   let [selectedpoints,setSelectedPoints] = useState([]);
@@ -16,14 +17,18 @@ function App() {
         <h1>SkyLens: Visual Analysis of Skyline on Multi-dimensional Data</h1>
       </header>
       <main>
-        <div>
-          <p></p>
-          <button onClick={() => setSelectNewChart(!selectNewChart)}>Use {selectNewChart ? "Comparison View":"Graph View"}</button>
-        </div> 
+      
         <div className="upper">
-          <ProjectionView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} />
-          {selectNewChart && <GraphView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} />}
-          {!selectNewChart && <ComparisonView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} />}
+          <ProjectionView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints}/>
+          {selectNewChart && 
+            <GraphView 
+                selectedpoints={selectedpoints}
+                setSelectedPoints={setSelectedPoints} 
+
+                setSelectNewChart={()=>setSelectNewChart(!selectNewChart)} 
+                  
+            />}
+          {!selectNewChart && <ComparisonView selectedpoints={selectedpoints} setSelectedPoints={setSelectedPoints} setSelectNewChart={()=>setSelectNewChart(!selectNewChart)} />}
           <SelectDataset />
         </div>
         <div className="lower">

@@ -69,7 +69,8 @@ function GraphView(props) {
     
     let graphRef = useRef(null);
 	let parallelRef = useRef(null);
-;
+    const [singlePlayer,setSinglePlayer] = useState(false);
+    const [loading, setLoading] = useState(false);
 	const [target, setTarget] = useState(null);
     const color = d3.scaleOrdinal(["#8d53d4", "#db9430", "#309adb"]).domain(d3.range(props.selectedpoints.length));
     
@@ -103,6 +104,7 @@ function GraphView(props) {
 		const width = svg.node().getBoundingClientRect().width;
 		const height = svg.node().getBoundingClientRect().height;
 		// Let's list the force we wanna apply on the network
+        
 		let simulation = d3
 			.forceSimulation(data.nodes)
 			.force(
@@ -136,18 +138,21 @@ function GraphView(props) {
 					.attr("x2", (d) => d.x2)
 					.attr("y2", (d) => d.y2)
 					.attr("stroke-linecap", "round");
+                setLoading(false)
 			});
              svg.selectAll(".node")
              .data(data.nodes)
              .append("text")
              .attr('font-size', '15px')
              .attr('fill', d=>color(d.id))
-             .attr('x', d => d.x-150)
-             .attr('y', d => d.y -30)
+             .attr('x', d => d.x-50)
+             .attr('y', d => d.y +(d.y>height/2?+30:-30))
             .text(d => `${d.name}\n ${d.dom_score}`);
 		}
 		function ticked() {
 			// Update node positions
+           
+            if(!loading && data.nodes.length>1) setLoading(true);
 			node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
            
 		}
@@ -160,10 +165,11 @@ function GraphView(props) {
         color
 	) => {
 		const width = 400;
-		const height = 400;
+		const height = singlePlayer ? 400 : 400;
         let selectedData = [];
-        for (let i of selectedPoints) {
-                selectedData.push(data.find(d=>d.id === i));
+        console.log("selectedPoints",selectedPoints,typeof selectedPoints)
+        for (let i=0 ; i<selectedPoints.length; i++) {
+                selectedData.push(data.find(d=>d.id === selectedPoints[i]));
             }
         // console.log("selectedDataparal",selectedData);
         svg.attr("width",400).attr("height",400);
@@ -233,14 +239,14 @@ function GraphView(props) {
 	useEffect(() => {
 		let filteredSkyline = [];
 		const svg = d3.select(graphRef.current);
-        
 		parseData().then(
 			({ data, skyline, dominatedPoints, datasetNumericColumns }) => {
+                setSinglePlayer(null);
 				for (let i of props.selectedpoints) {
 					filteredSkyline.push(data.find(d=>d.id === i));
 				}
-
-				drawGraph(
+                if (props.selectedpoints.length >1){
+                    drawGraph(
 					buildGraphdata(
 						filteredSkyline,
 						dominatedPoints,
@@ -248,6 +254,17 @@ function GraphView(props) {
 					),
 					svg,color
 				);
+                }else if (props.selectedpoints.length ==1){
+                    setSinglePlayer(data.find(d=>d.id === props.selectedpoints[0]));
+                    drawParallelAxisChart(
+						data,
+                        props.selectedpoints, 
+						datasetNumericColumns,
+						svg,
+                        color
+					);
+                }
+				
 			}
 		);
 		return () => svg.selectAll("*").remove();
@@ -264,7 +281,7 @@ function GraphView(props) {
                         selectedPoints = [target.id];
                     }
                     
-
+                    
 					drawParallelAxisChart(
 						data,
                         selectedPoints,
@@ -281,7 +298,7 @@ function GraphView(props) {
 	return (
 		<div className='graphView' key={props.selectedpoints}>
 			
-			{target && (
+			{target && props.selectedpoints.length >1 &&(
 				<MouseTracker offset={{ x: 10, y: 10 }} className="tooltip-parallel">
                     
 					<div className='parallel-axis-container'>
@@ -307,13 +324,27 @@ function GraphView(props) {
                                
                           
                         )}
-                        <svg id='parallelSVG' ref={parallelRef}></svg>
+                        
+                        <svg id='graphSVG' ref={parallelRef}></svg>
                         </div>
 				</MouseTracker>
 			)}
+            <div className="chart-header">
+            <div style={{display:"flex",flexDirection:"row",justifyContent:"center",alignItems:"center"}}>
+            <h3>Graph View</h3>
+            <img src = {"https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnI0ejlrN3Fubzh3aDExYmp1MDI2dDh2ajczN3J2d2hrNWQxaTFxYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjI6SIIHBdRxXI40/giphy.gif"} style={{width:"30px",display:loading?'block':'none'}}/>    
+            </div>
+            
+            <button className="toggle-button" onClick={props.setSelectNewChart}>Use Comparison View</button>  
+            </div>
+			{Boolean(singlePlayer) && 
+                            <div style={{color:color(props.selectedpoints[0])}}>
+                                    <p>Player: {singlePlayer.Player}</p>
+                                    <p>Ex. Dom Score: {singlePlayer.dom_score}</p>
+                                </div>
+                        }
+			<svg id='graphSVG' ref={graphRef} style={{height:singlePlayer ? '80%' : '93%'}}></svg>
 
-			<h3>Graph View</h3>
-			<svg id='graphSVG' ref={graphRef}></svg>
 		</div>
 	);
 }

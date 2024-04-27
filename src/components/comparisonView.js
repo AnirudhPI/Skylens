@@ -607,7 +607,11 @@ function ComparisonView(props) {
 
   return (
     <div className="comparisonView">
+      <div className='chart-header'>
       <h3>Comparison View</h3>
+      <button className='toggle-button' onClick={()=>props.setSelectNewChart()}>Use Graph View</button>  
+      </div>
+      
       <svg id="comparisonSVG" ref={ref}></svg>
     </div>
   );
