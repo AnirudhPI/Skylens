@@ -6,7 +6,7 @@ import createDistChart from './graph/distChart';
 import createMatrixChart from './graph/matrixChart';
 
 const tableData = await parseData().then((res) => res.data).catch(err => console.log(err));
-const reducedTableData = tableData.slice(0, 5);
+const reducedTableData = tableData.slice(0, 30);
 
 const TableDisplay = ({ data = reducedTableData }) => {
 

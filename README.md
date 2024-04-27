@@ -2,6 +2,17 @@
 
 This is our Data Visualization project,implementing the [Skylens paper](https://arxiv.org/abs/1708.03462) by Zhao et al. For this project we have used the NBA 2022-2023 season stats, [link](https://www.kaggle.com/datasets/vivovinco/20222023-nba-player-stats-regular).
 Built using React and D3.js.
+
+## Team Members
+1. Adhip Kashyap
+2. Anirudh P I
+3. Sanjai T S
+4. Saketh Reddy
+5. Vignesh Siva
+
+## Compatibility
+Project uses set comparison functions not supported by firefox, please use chrome or edge.
+
 ## Demo
 ![demo](/public/demo.png)
 ![demo2](/public/demo2.png)
@@ -37,4 +48,5 @@ The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+
 
