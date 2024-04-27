@@ -1,6 +1,5 @@
 import * as d3 from 'd3';
 function createMatrixChart(data, attribute, rowIndex, colIndex) {
-  console.log( attribute, rowIndex, colIndex);
     let matrixSVG = d3.select(`#matChart-${rowIndex}-${colIndex}`);
     matrixSVG.append("g");
     let svgWidth = matrixSVG.node().getBoundingClientRect().width;
