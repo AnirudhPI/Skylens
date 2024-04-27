@@ -10,7 +10,7 @@ import { type } from "@testing-library/user-event/dist/type";
 const buildGraphdata = (skyline, dominatedPoints, datasetNumericColumns) => {
 	let nodes = [];
 	let links = [];
-	console.log("skyline", skyline);
+	// console.log("skyline", skyline);
 	for (let i = 0; i < skyline.length; i++) {
 		nodes.push({
 			id: i,
@@ -81,7 +81,7 @@ function GraphView(props) {
 			.enter()
 			.append("g")
 			.on("mouseenter", (event, d) => setTarget(d))
-			.on("mouseleave", (event, d) => setTarget(d))
+			.on("mouseleave", (event, d) => setTarget(null))
 			.attr("class", "link");
 
 		// Initialize the nodes
@@ -90,12 +90,16 @@ function GraphView(props) {
 			.selectAll("circle")
 			.data(data.nodes)
 			.enter()
+            .append("g")
+            .attr("class", "node")
 			.append("circle")
-			.attr("r", (d) => 10 + Math.sqrt(d.dom_score))
+			.attr("r", (d) => 5 + 2*Math.sqrt(d.dom_score))
 			// .style("fill", "none")
+            
 			.style("fill", (d) => color(d.id))
 			.on("mouseenter", (event, d) => setTarget(d))
-			.on("mouseleave", (event, d) => setTarget(null));
+			.on("mouseleave", (event, d) => setTarget(null))
+            ;
 		const width = svg.node().getBoundingClientRect().width;
 		const height = svg.node().getBoundingClientRect().height;
 		// Let's list the force we wanna apply on the network
@@ -117,7 +121,7 @@ function GraphView(props) {
 			// Update link positions
 			link.each(function (d) {
 				const barsData = axis2d(d);
-				console.log("inbards", d, barsData);
+				// console.log("inbards", d, barsData);
 				d3.select(this)
 					.selectAll(".bar")
 					.data(barsData)
@@ -133,21 +137,35 @@ function GraphView(props) {
 					.attr("y2", (d) => d.y2)
 					.attr("stroke-linecap", "round");
 			});
+             svg.selectAll(".node")
+             .data(data.nodes)
+             .append("text")
+             .attr('font-size', '15px')
+             .attr('fill', d=>color(d.id))
+             .attr('x', d => d.x-150)
+             .attr('y', d => d.y -30)
+            .text(d => `${d.name}\n ${d.dom_score}`);
 		}
 		function ticked() {
 			// Update node positions
 			node.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+           
 		}
 	}
 	const drawParallelAxisChart = (
-		selectedData,
+		data,
+        selectedPoints,
 		datasetNumericColumns,
 		svg,
         color
 	) => {
 		const width = 400;
 		const height = 400;
-        console.log("selectedDataparal",selectedData);
+        let selectedData = [];
+        for (let i of selectedPoints) {
+                selectedData.push(data.find(d=>d.id === i));
+            }
+        // console.log("selectedDataparal",selectedData);
         svg.attr("width",400).attr("height",400);
 		let y = {};
 		for (let i in datasetNumericColumns) {
@@ -156,7 +174,7 @@ function GraphView(props) {
 				.scaleLinear()
 
 				.domain(
-					[0.9 * d3.min(selectedData, d => Number(d[name])), 1.1 * d3.max(selectedData, d => Number(d[name]))]
+					[0.9 * d3.min(data, d => Number(d[name])), 1.1 * d3.max(data, d => Number(d[name]))]
 				)
 				.range([height-40, 20]);
 		}
@@ -200,17 +218,16 @@ function GraphView(props) {
 			})
 			// And I build the axis with the call function
 			.each(function (d) {
-                console.log("d",d);
+                // console.log("d",d);
 				d3.select(this).call(d3.axisLeft().scale(y[d]).ticks(7));
 			})
 			// Add axis title
 			.append("text")
-			.style("text-anchor", "middle")
-			.attr("y", 0)
-			.text(function (d) {
-				return d;
-			})
-			.style("fill", "black");
+            .attr('font-size', '15px')
+            .attr('x', (d,i)=>  i*5)
+            .attr('y', 15)
+            .text(d => { console.log(d); return d; })
+            .style("fill", "black");
 	};
 	
 	useEffect(() => {
@@ -218,9 +235,9 @@ function GraphView(props) {
 		const svg = d3.select(graphRef.current);
         
 		parseData().then(
-			({ _, skyline, dominatedPoints, datasetNumericColumns }) => {
+			({ data, skyline, dominatedPoints, datasetNumericColumns }) => {
 				for (let i of props.selectedpoints) {
-					filteredSkyline.push(skyline[i]);
+					filteredSkyline.push(data.find(d=>d.id === i));
 				}
 
 				drawGraph(
@@ -240,22 +257,17 @@ function GraphView(props) {
 		if (target) {
 			parseData().then(
 				({ data, skyline, dominatedPoints, datasetNumericColumns }) => {
-					let selectedData;
+					let selectedPoints;
                     if (target.type === "link"){
-                        selectedData = data.filter(
-						(d) =>
-							d.id === target.source.id ||
-							d.id === target.target.id
-					); 
+                        selectedPoints = [target.source.id,target.target.id];
                     }else{
-                        selectedData = data.filter(
-						(d) =>
-							d.id === target.id);
+                        selectedPoints = [target.id];
                     }
                     
 
 					drawParallelAxisChart(
-						selectedData,
+						data,
+                        selectedPoints,
 						datasetNumericColumns,
 						svg,
                         color
@@ -317,7 +329,7 @@ function axis2d(links) {
 	const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 	const theta = Math.atan2(y2 - y1, x2 - x1);
 	const domscore_sum = d3.sum(dom_score);
-	const lerps = dom_score.map((d) => d / domscore_sum);
+	const lerps = dom_score.map((d) => d / Math.max(domscore_sum, 1));
 	// const lerps = [0.5,0.5];
 	const scaledX1 = x1 + margin * length * Math.cos(theta);
 	const scaledY1 = y1 + margin * length * Math.sin(theta);
@@ -334,7 +346,7 @@ function axis2d(links) {
 			y2:
 				scaledY1 +
 				lerps[0] * (1 - 2 * margin) * length * Math.sin(theta),
-			id: links.target.id,
+			id: links.source.id,
 		},
 		{
 			x1:
@@ -345,7 +357,7 @@ function axis2d(links) {
 				lerps[0] * (1 - 2 * margin) * length * Math.sin(theta),
 			x2: scaledX2,
 			y2: scaledY2,
-			id: links.source.id,
+			id: links.target.id,
 		},
 	];
 

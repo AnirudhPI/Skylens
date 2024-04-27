@@ -9,7 +9,7 @@ function ComparisonView(props) {
     console.log('playerData', playerData)
 
     const nameOfPlayer = playerData.Player;
-    console.log('playerName: ', nameOfPlayer);
+    // console.log('playerName: ', nameOfPlayer);
 
     var chartWidth = radius * 2;
     var chartHeight = radius * 2;
