@@ -100,7 +100,7 @@ export const calculateExclusiveDominantionScores = (dominatedPoints,point1, poin
     let domby1 = new Set(dominatedPoints.filter((dom_point)=>{
         return dom_point.dominated_by.includes(point1);
     }));
-    console.log("domby1",domby1)
+    // console.log("domby1",domby1)
     let domby2 = new Set(dominatedPoints.filter((dom_point)=>{
         return dom_point.dominated_by.includes(point2);
     }));
