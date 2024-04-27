@@ -226,6 +226,21 @@ function ProjectionView(props) {
             d3.select('.tooltip').remove();
 
 
+          }).on("click", (event, d) => {
+
+            var index = d.index;
+            
+            if (!res.includes(index)) {
+              if(res.length < 3){
+                res.push(index);
+
+              }
+            }
+            else{
+              res = res.filter((item) => item !== index);
+            }
+
+            props.setSelectedPoints([...res]);
           });
             
         
