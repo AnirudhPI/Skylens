@@ -4,12 +4,14 @@ import {parseData} from '../app/dataParser/dataParser';
 
 function ComparisonView(props) {
 
+  let totalData;
+
   function drawRadarChart(positionX, positionY, radius, color, playerData, offset) {
 
     console.log('playerData', playerData)
 
     const nameOfPlayer = playerData.Player;
-    console.log('playerName: ', nameOfPlayer);
+    // console.log('playerName: ', nameOfPlayer);
 
     var chartWidth = radius * 2;
     var chartHeight = radius * 2;
@@ -134,9 +136,173 @@ function ComparisonView(props) {
         .attr('font-size', '12px')
         .attr('fill', color)
         .text(playerData.Player);
+
+
+    svg.on('mouseover', function(event){
+        tooltip_on_hover_radar(event, [playerData], [color]);
+    })
+    svg.on('mouseout', function(event){
+        d3.select('.tooltip').remove();
+    })
+   
   }
 
-  function drawPieChart(centerX, centerY, scores, chartRadius, colors) {
+  function tooltip_on_hover_radar(event, playersData, color){
+
+    var glyph = d3.select('body').append('div')
+    .classed('tooltip', true)
+    .style('position', 'absolute')
+    .style('left', (event.pageX + 10) + 'px')
+    .style('top', (event.pageY + 10) + 'px')
+    .style('width', '300px')
+    .style('height', '400px')
+    .style('border', '2px solid black')
+    .style('background-color', 'white');
+
+
+   var svg_tool = glyph.append('svg').attr('width', '100%').attr('height', '100%');
+
+   var chartWidth = 300;
+   var chartHeight = 450;
+   var radius = 100;
+   var offset = 30;
+   var labelOffset = 15;
+   var numLines = 7;
+   var centerX = chartWidth / 2;
+   var centerY = chartHeight / 2;
+    
+    function getLineCoordinates(angle, radius) {
+        return {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle)
+        };
+    }
+    
+    var labels = ["G","ORB", "DRB", "TRB", "AST", "STL","PTS"];
+
+    var numLines = 7;
+    var startingAngle = -Math.PI / 2; 
+
+    for (var i = 0; i < numLines; i++) {
+    var angle = startingAngle + (i * 2 * Math.PI) / numLines; 
+    var coordinates = getLineCoordinates(angle, radius); 
+    
+    svg_tool.append('line')
+        .attr('x1', centerX)
+        .attr('y1', centerY)
+        .attr('x2', coordinates.x)
+        .attr('y2', coordinates.y)
+        .attr('stroke', 'black')
+        .attr('stroke-width', 1);
+    }
+
+    var labelOffset = 15;
+
+    labels.forEach(function(label, i) {
+        var angle = -Math.PI / 2 + (i * 2 * Math.PI) / numLines; 
+        var labelRadius = radius + labelOffset; 
+
+        var labelCoordinates = getLineCoordinates(angle, labelRadius);
+        
+        svg_tool.append('text')
+            .attr('x', labelCoordinates.x)
+            .attr('y', labelCoordinates.y)
+            .attr('text-anchor', angle === -Math.PI / 2 || angle === Math.PI / 2 ? 'middle' : (angle < -Math.PI / 2 || (angle > 0 && angle < Math.PI / 2) ? 'start' : 'end'))
+            .attr('dominant-baseline', angle < 0 ? 'hanging' : 'auto')
+            .attr('alignment-baseline', angle === Math.PI / 2 ? 'middle' : (angle < 0 ? 'hanging' : 'baseline'))
+            .attr('dy', angle === -Math.PI / 2 ? '0.35em' : (angle === Math.PI / 2 ? '-0.35em' : '0'))
+            .attr('font-size', '10px')
+            .attr('fill', 'black')
+            .text(label);
+    });
+
+    playersData.forEach((playerData, index) => {
+      console.log(playerData, color[index], "hi");
+      var domicating_score = playerData.dom_score;
+    
+      console.log()
+      if(playersData.length == 1){
+        svg_tool.append('circle')
+          .attr('cx', centerX)
+          .attr('cy', centerY)
+          .attr('r', domicating_score)
+          .attr('fill', 'none')
+          .attr('stroke', color[index])
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '5,5');
+      }
+  
+      var scores = {
+          G: playerData.G - 23 + offset,      // scale 70 - 83
+          ORB: playerData.ORB * 18 + offset,  // 0.4 - 3.3
+          DRB: playerData.DRB * 9 + offset,   // 2.2 - 9.1
+          TRB: playerData.TRB * 4 + offset,   // 2.5 - 12.3
+          AST: playerData.AST * 5 + offset,   // scale 1-10
+          STL: playerData.STL * 30 + offset,  // 0.6 - 1.6
+          PTS: playerData.PTS * 1.66 + offset // 7 - 30.1
+      };
+      
+      var labelAngles = {
+        G: 0,
+        ORB: (1 * 2 * Math.PI) / 7,
+        DRB: (2 * 2 * Math.PI) / 7,
+        TRB: (3 * 2 * Math.PI) / 7,
+        AST: (4 * 2 * Math.PI) / 7,
+        STL: (5 * 2 * Math.PI) / 7,
+        PTS: (6 * 2 * Math.PI) / 7
+      };
+      
+      Object.entries(scores).forEach(([stat, value]) => {
+        var angle = labelAngles[stat] - Math.PI / 2;
+        
+        var dotCoordinates = getLineCoordinates(angle, value);
+        
+        svg_tool.append('circle')
+            .attr('cx', dotCoordinates.x)
+            .attr('cy', dotCoordinates.y)
+            .attr('r', 4)
+            .attr('class', `red-dot${index}`)
+            .attr('fill', color[index]);
+      });
+  
+      var lineGenerator = d3.line();
+  
+      var redDotPositions = svg_tool.selectAll(`.red-dot${index}`).nodes().map(function(node) {
+        return [+node.getAttribute('cx'), +node.getAttribute('cy')];
+      });
+  
+      redDotPositions.push(redDotPositions[0]);
+  
+      var pathData = lineGenerator(redDotPositions);
+  
+      svg_tool.append('path')
+          .attr('d', pathData)
+          .attr('stroke', color[index])
+          .attr('stroke-width', 2)
+          .attr('fill', 'none');
+  
+          svg_tool.append('text')
+          .attr('x', 20)
+          .attr('y', 50 + 20 * index) 
+          .attr('text-anchor', 'left')
+          .attr('font-size', '15px')
+          .attr('fill', color[index])
+          .style('font-weight', 'bold')
+          .text(playerData.Player);
+  
+          svg_tool.append('text')
+          .attr('x', chartWidth - 40)
+          .attr('y', 50 + 20 * index) 
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '15px')
+          .attr('fill', color[index])
+          .style('font-weight', 'bold')
+          .text(playerData.dom_score);
+    })
+
+  }
+
+  function drawPieChart(centerX, centerY, scores, chartRadius, colors, selectedPlayers) {
     var pie = d3.pie();
     var arc = d3.arc().innerRadius(0).outerRadius(chartRadius / 3);
 
@@ -147,13 +313,24 @@ function ComparisonView(props) {
                     .data(pie(scores))
                     .enter()
                     .append('g')
-                    .attr('class', 'arc');
+                    .attr('class', 'arc')
+                    .attr('data-players', (d, i) => JSON.stringify(selectedPlayers[i]));;
 
     arcs.append('path')
         .attr('d', arc)
         .attr('fill', function(d, i) {
             return colors[i];
-        });
+        })
+        .each(function(d, i) {
+          var data = selectedPlayers; 
+          d3.select(this).on('mouseover', function(event) {
+                tooltip_on_hover_radar(event, data, colors);
+          })
+       })
+       .on('mouseout', function(event) {
+          d3.select('.tooltip').remove();
+       });
+
 
 
     var outerArcRadius = chartRadius / 3 + 1 ; // Adjust as needed to draw arcs outside the pie chart
@@ -179,9 +356,18 @@ function ComparisonView(props) {
     arcGroups.append('path')
         .attr('d', arcGenerator)
         .attr('fill', function(d, i) {
-            return colors[i]; // Use corresponding color or a function to determine it
+            return colors[i];
         })
-        .attr('stroke', 'none'); // Remove stroke if not needed
+        .attr('stroke', 'none')
+        .each(function(d, i) {
+          var data = selectedPlayers; // Get the data for this segment
+          d3.select(this).on('mouseover', function(event) {
+                tooltip_on_hover_radar(event, data, colors);
+          })
+       })
+       .on('mouseout', function(event) {
+          d3.select('.tooltip').remove();
+       }); 
   }
 
   function updateVisualization(selectedPlayers) {
@@ -230,7 +416,7 @@ function ComparisonView(props) {
         dominating_scores.push(playerData.dom_score)
     });
 
-    drawPieChart(centerX + 50, centerY+ 80, [dominating_scores[0], dominating_scores[1]], chartRadius - 50, colors);
+    drawPieChart(centerX + 50, centerY+ 80, [dominating_scores[0], dominating_scores[1]], chartRadius - 50, colors, selectedPlayers);
 
   }
 
@@ -353,10 +539,10 @@ function ComparisonView(props) {
     console.log('dom scores', dominating_scores)
         
 
-    drawPieChart(centerX + 80, centerY+100, dominating_scores, chartRadius, colors); // center pie
-    drawPieChart(centerX, centerY+60, [dominating_scores[0], dominating_scores[1]], chartRadius, [colors[0], colors[1]]) // left pie
-    drawPieChart(centerX + 150, centerY+60, [dominating_scores[0], dominating_scores[2]], chartRadius, [colors[0], colors[2]]) // right pie
-    drawPieChart(centerX + 80, bottomLeftChartPosition.y + 40, [dominating_scores[1], dominating_scores[2]], chartRadius, [colors[1], colors[2]]) // last pie
+    drawPieChart(centerX + 80, centerY+100, dominating_scores, chartRadius, colors, selectedPlayers); // center pie
+    drawPieChart(centerX, centerY+60, [dominating_scores[0], dominating_scores[1]], chartRadius, [colors[0], colors[1]], [selectedPlayers[0],selectedPlayers[1]]) // left pie
+    drawPieChart(centerX + 150, centerY+60, [dominating_scores[0], dominating_scores[2]], chartRadius, [colors[0], colors[2]], [selectedPlayers[0],selectedPlayers[2]]) // right pie
+    drawPieChart(centerX + 80, bottomLeftChartPosition.y + 40, [dominating_scores[1], dominating_scores[2]], chartRadius, [colors[1], colors[2]], [selectedPlayers[1],selectedPlayers[2]]) // last pie
   }
 
 
@@ -368,7 +554,7 @@ function ComparisonView(props) {
         selectedPlayersId.forEach(id => {
             selectedPlayers.push(skyline.find(x => x.id === id))  
         });
-
+        totalData = data;
         switch(selectedPlayers.length) {
             case 1:
                 updateVisualization(selectedPlayers);
